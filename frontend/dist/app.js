@@ -139,7 +139,8 @@ function render() {
   $('#btnPin').classList.toggle('on', s.alwaysOnTop);
   $('#cfgPath').textContent = state.path;
   $('#ver').textContent = 'v' + state.version;
-  $('#footerInfo').textContent = `Фраз: ${c.phrases.length} · v${state.version}`;
+  $('#tabCount').textContent = c.phrases.length || '';
+  $('#footerInfo').textContent = 'v' + state.version;
   applyOpacity();
 }
 
@@ -375,14 +376,27 @@ $('#btnShortcut').onclick = async () => {
   refreshShortcut();
 };
 
-function openSettings(open) {
-  $('#viewSettings').classList.toggle('hidden', !open);
-  $('#viewList').classList.toggle('hidden', open);
-  $('#btnSettings').classList.toggle('on', open);
-  if (open) refreshShortcut();
+// Вкладки «Фразы» / «Настройки». Ctrl + Tab — переключить.
+function switchTab(tab) {
+  const settings = tab === 'settings';
+  $('#viewSettings').classList.toggle('hidden', !settings);
+  $('#viewList').classList.toggle('hidden', settings);
+  document.querySelectorAll('.tab').forEach((t) => {
+    const on = t.dataset.tab === tab;
+    t.classList.toggle('on', on);
+    t.setAttribute('aria-selected', on);
+  });
+  if (settings) refreshShortcut();
 }
+const openSettings = (open) => switchTab(open ? 'settings' : 'list');
 
-$('#btnSettings').onclick = () => openSettings($('#viewSettings').classList.contains('hidden'));
+document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => switchTab(t.dataset.tab); });
+window.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.code === 'Tab' && !recording && $('#modal').classList.contains('hidden')) {
+    e.preventDefault();
+    switchTab($('#viewSettings').classList.contains('hidden') ? 'settings' : 'list');
+  }
+});
 $('#btnHide').onclick = () => api().Hide();
 $('#btnClose').onclick = () => api().Quit();
 $('#btnPin').onclick = () => {
