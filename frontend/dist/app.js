@@ -363,12 +363,26 @@ $('#modalCancel').onclick = closeModal;
 $('#modalSave').onclick = saveModal;
 $('#modal').addEventListener('mousedown', (e) => { if (e.target.id === 'modal') closeModal(); });
 
-$('#btnSettings').onclick = () => {
-  const settingsOpen = !$('#viewSettings').classList.contains('hidden');
-  $('#viewSettings').classList.toggle('hidden', settingsOpen);
-  $('#viewList').classList.toggle('hidden', !settingsOpen);
-  $('#btnSettings').classList.toggle('on', !settingsOpen);
+async function refreshShortcut() {
+  let has = false;
+  try { has = await api().HasDesktopShortcut(); } catch (_) {}
+  $('#lnkStatus').textContent = has ? 'Есть' : 'Нет';
+  $('#btnShortcut').textContent = has ? 'Обновить' : 'Создать';
+}
+$('#btnShortcut').onclick = async () => {
+  try { await api().CreateDesktopShortcut(); toast('Ярлык на рабочем столе готов'); }
+  catch (e) { toast(String(e), true); }
+  refreshShortcut();
 };
+
+function openSettings(open) {
+  $('#viewSettings').classList.toggle('hidden', !open);
+  $('#viewList').classList.toggle('hidden', open);
+  $('#btnSettings').classList.toggle('on', open);
+  if (open) refreshShortcut();
+}
+
+$('#btnSettings').onclick = () => openSettings($('#viewSettings').classList.contains('hidden'));
 $('#btnHide').onclick = () => api().Hide();
 $('#btnClose').onclick = () => api().Quit();
 $('#btnPin').onclick = () => {
@@ -499,6 +513,7 @@ async function init() {
   });
   window.runtime.EventsOn('binder:error', (msg) => toast(msg, true));
   window.runtime.EventsOn('binder:update', showUpdate);
+  window.runtime.EventsOn('binder:open-settings', () => openSettings(true));
   window.runtime.EventsOn('binder:update-progress', (pct) => {
     $('#btnUpdate').textContent = `Скачиваю ${pct}%`;
   });

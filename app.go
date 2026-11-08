@@ -28,6 +28,7 @@ type App struct {
 	pasteMu sync.Mutex
 	pid     uint32
 	updated bool // запущены сразу после обновления
+	tray    *trayIcon
 }
 
 // State — то, что получает страница.
@@ -50,6 +51,58 @@ func (a *App) onStartup(ctx context.Context) {
 	a.applyHotkeys()
 	go a.trackForeground()
 	go a.autoCheckUpdates()
+	go a.ensureDesktopShortcut()
+
+	a.tray = &trayIcon{
+		onToggle: func() {
+			h := a.hwnd.Load()
+			if h != 0 && isWindowVisible(h) && !isIconic(h) {
+				a.hideWindow()
+			} else {
+				a.showWindow(true)
+			}
+		},
+		onSettings: func() {
+			a.showWindow(true)
+			wruntime.EventsEmit(a.ctx, "binder:open-settings")
+		},
+		onQuit: a.Quit,
+		tip: func() string {
+			t := "T31K Binder — работает"
+			if hk := a.snapshot().Settings.ToggleHotkey; !hk.Empty() {
+				t += "\nОткрыть / скрыть: " + hotkeyLabel(hk)
+			}
+			return t
+		},
+	}
+	startTray(a.tray)
+}
+
+// hotkeyLabel — сочетание в виде «Ctrl + Alt + B».
+func hotkeyLabel(h Hotkey) string {
+	var parts []string
+	if h.Ctrl {
+		parts = append(parts, "Ctrl")
+	}
+	if h.Alt {
+		parts = append(parts, "Alt")
+	}
+	if h.Shift {
+		parts = append(parts, "Shift")
+	}
+	if h.Win {
+		parts = append(parts, "Win")
+	}
+	key := h.Code
+	switch {
+	case strings.HasPrefix(key, "Digit"):
+		key = strings.TrimPrefix(key, "Digit")
+	case strings.HasPrefix(key, "Key"):
+		key = strings.TrimPrefix(key, "Key")
+	case strings.HasPrefix(key, "Numpad"):
+		key = "Num " + strings.TrimPrefix(key, "Numpad")
+	}
+	return strings.Join(append(parts, key), " + ")
 }
 
 func (a *App) onDomReady(ctx context.Context) {
@@ -78,6 +131,7 @@ func (a *App) onShutdown(ctx context.Context) {
 	if a.hk != nil {
 		a.hk.Set(nil)
 	}
+	a.tray.Remove()
 }
 
 func (a *App) snapshot() Config {
@@ -286,6 +340,7 @@ func (a *App) SaveConfig(cfg Config) (State, error) {
 	cfg.Settings.X, cfg.Settings.Y = g.X, g.Y
 	cfg.Settings.Width, cfg.Settings.Height = g.Width, g.Height
 	cfg.Settings.PositionRemembered = g.PositionRemembered
+	cfg.Settings.ShortcutCreated = g.ShortcutCreated
 	topChanged := g.AlwaysOnTop != cfg.Settings.AlwaysOnTop
 	a.cfg = cfg
 	a.mu.Unlock()
@@ -294,6 +349,7 @@ func (a *App) SaveConfig(cfg Config) (State, error) {
 		wruntime.WindowSetAlwaysOnTop(a.ctx, cfg.Settings.AlwaysOnTop)
 	}
 	a.SetOpacity(cfg.Settings.Opacity)
+	a.tray.Refresh()
 	a.applyHotkeys()
 	if err := saveConfig(cfg); err != nil {
 		return a.GetState(), errors.New("не удалось сохранить настройки: " + err.Error())

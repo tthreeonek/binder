@@ -35,6 +35,7 @@ type Settings struct {
 	Opacity            int    `json:"opacity"`   // непрозрачность всего окна, 20–100 %
 	PasteMode          string `json:"pasteMode"` // "clipboard" (Ctrl+V) или "type"
 	CheckUpdates       bool   `json:"checkUpdates"`
+	ShortcutCreated    bool   `json:"shortcutCreated"` // ярлык уже создавался один раз
 	RestoreClipboard   bool   `json:"restoreClipboard"`
 	PressEnter         bool   `json:"pressEnter"`
 	AlwaysOnTop        bool   `json:"alwaysOnTop"`

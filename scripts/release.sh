@@ -28,4 +28,4 @@ git commit -m "Версия $VER" -m "$NOTES"
 git tag "v$VER"
 git push origin main "v$VER"
 gh release create "v$VER" build/release/T31K-Binder.exe \
-  --repo tthreeonek/t31k-binder --title "T31K Binder $VER" --notes "$NOTES"
+  --repo tthreeonek/binder --title "T31K Binder $VER" --notes "$NOTES"

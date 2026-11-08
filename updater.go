@@ -22,7 +22,7 @@ import (
 
 // Обновления берутся из релизов открытого репозитория на GitHub:
 // у релиза тег vX.Y.Z и приложенный exe.
-const updateRepo = "tthreeonek/t31k-binder"
+const updateRepo = "tthreeonek/binder"
 
 type UpdateInfo struct {
 	Available bool   `json:"available"`
