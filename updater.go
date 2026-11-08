@@ -170,6 +170,7 @@ func (a *App) InstallUpdate() error {
 		return errors.New("не удалось заменить файл: " + err.Error())
 	}
 
+	logf("обновление: файл заменён на %s, запускаю новую копию", rel.TagName)
 	cmd := exec.Command(exe, "--updated", "--wait-pid", strconv.Itoa(os.Getpid()))
 	cmd.Dir = filepath.Dir(exe)
 	if err := cmd.Start(); err != nil {
@@ -180,7 +181,8 @@ func (a *App) InstallUpdate() error {
 	a.rememberGeometry()
 	go func() {
 		time.Sleep(200 * time.Millisecond)
-		wruntime.Quit(a.ctx)
+		logf("обновление: закрываю старую копию")
+		a.quit()
 	}()
 	return nil
 }

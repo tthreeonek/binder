@@ -107,6 +107,9 @@ func shortcutTarget(lnk string) string {
 // ensureDesktopShortcut создаёт ярлык при первом запуске и чинит его, если
 // exe перенесли. Ярлык, который пользователь удалил сам, заново не создаётся.
 func (a *App) ensureDesktopShortcut() {
+	if testMode {
+		return
+	}
 	exe := currentExe()
 	if exe == "" {
 		return

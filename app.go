@@ -76,6 +76,10 @@ func (a *App) onStartup(ctx context.Context) {
 		},
 	}
 	startTray(a.tray)
+	logf("onStartup: готово")
+	if testMode {
+		go a.runTestAction(os.Getenv("BINDER_TEST_ACTION"))
+	}
 }
 
 // hotkeyLabel — сочетание в виде «Ctrl + Alt + B».
@@ -114,6 +118,7 @@ func (a *App) onDomReady(ctx context.Context) {
 		for i := 0; i < 50 && a.hwnd.Load() == 0; i++ {
 			if h := findOwnWindow(a.pid, appTitle); h != 0 {
 				a.hwnd.Store(h)
+				logf("окно найдено: hwnd=%#x", h)
 				setWindowOpacity(h, a.snapshot().Settings.Opacity)
 				break
 			}
@@ -123,11 +128,13 @@ func (a *App) onDomReady(ctx context.Context) {
 }
 
 func (a *App) onBeforeClose(ctx context.Context) bool {
+	logf("onBeforeClose")
 	a.rememberGeometry()
 	return false
 }
 
 func (a *App) onShutdown(ctx context.Context) {
+	logf("onShutdown")
 	if a.hk != nil {
 		a.hk.Set(nil)
 	}
@@ -410,7 +417,32 @@ func (a *App) CopyPhrase(id string) error {
 
 func (a *App) Hide()     { a.hideWindow() }
 func (a *App) Minimize() { a.rememberGeometry(); wruntime.WindowMinimise(a.ctx) }
-func (a *App) Quit()     { a.rememberGeometry(); wruntime.Quit(a.ctx) }
+func (a *App) Quit() {
+	logf("выход по команде")
+	a.rememberGeometry()
+	a.quit()
+}
+
+// quit закрывает программу через Wails. Если за 5 секунд процесс не
+// завершился (так однажды было при обновлении), снимаем сочетания, убираем
+// значок из трея и завершаемся сами — иначе новая копия не запустится.
+func (a *App) quit() {
+	go func() {
+		time.Sleep(5 * time.Second)
+		logf("выход завис — завершаю принудительно")
+		if a.hk != nil {
+			done := make(chan struct{})
+			go func() { a.hk.Set(nil); close(done) }()
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+			}
+		}
+		a.tray.Remove()
+		os.Exit(0)
+	}()
+	wruntime.Quit(a.ctx)
+}
 
 func (a *App) ResetConfig() (State, error) {
 	d := defaultConfig()
@@ -437,4 +469,18 @@ func findOwnWindow(pid uint32, title string) uintptr {
 	})
 	_ = windows.EnumWindows(cb, unsafe.Pointer(nil))
 	return found
+}
+
+// runTestAction — только для BINDER_TEST=1: вызывает действие без мыши.
+func (a *App) runTestAction(action string) {
+	time.Sleep(3 * time.Second)
+	logf("тест: действие %q", action)
+	switch action {
+	case "quit":
+		a.Quit()
+	case "update":
+		if err := a.InstallUpdate(); err != nil {
+			logf("тест: обновление не удалось: %v", err)
+		}
+	}
 }

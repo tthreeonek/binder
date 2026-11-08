@@ -15,11 +15,21 @@ var assets embed.FS
 
 const (
 	appTitle   = "T31K Binder"
-	appVersion = "1.0.0"
+	appVersion = "1.0.1"
 )
 
+var testMode bool
+
 func main() {
-	_ = os.Unsetenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS")
+	// BINDER_TEST=1 — режим проверки: окно стартует скрытым, ярлык не
+	// трогается, а WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS (порт отладки)
+	// сохраняется. Обычному запуску отладочный порт не нужен.
+	testMode = os.Getenv("BINDER_TEST") == "1"
+	if !testMode {
+		_ = os.Unsetenv("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS")
+	}
+	openLog()
+	logf("запуск %s, версия %s, аргументы %v", currentExe(), appVersion, os.Args[1:])
 	updated := prepareAfterUpdate(os.Args[1:])
 
 	cfg := loadConfig()
@@ -34,13 +44,17 @@ func main() {
 		h = 560
 	}
 
+	logf("окно запускается")
 	err := wails.Run(&options.App{
-		Title:     appTitle,
-		Width:     w,
-		Height:    h,
-		MinWidth:  320,
-		MinHeight: 260,
-		Frameless: true,
+		Title:       appTitle,
+		Width:       w,
+		Height:      h,
+		MinWidth:    320,
+		MinHeight:   260,
+		Frameless:   true,
+		StartHidden: testMode,
+		// Иначе Wails передаёт WebView2 свои аргументы и порт отладки не откроется.
+		EnableFraudulentWebsiteDetection: testMode,
 		// Прозрачность оверлея задаётся всему окну средствами Windows
 		// (setWindowOpacity), сам фон страницы непрозрачный.
 		BackgroundColour: &options.RGBA{R: 20, G: 16, B: 34, A: 255},
@@ -63,6 +77,8 @@ func main() {
 		},
 	})
 	if err != nil {
+		logf("wails.Run: %v", err)
 		os.Exit(1)
 	}
+	logf("выход")
 }

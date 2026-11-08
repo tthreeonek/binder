@@ -1,4 +1,4 @@
-# T31K Binder
+# Binder
 
 Биндер фраз для Windows: фраза по сочетанию клавиш вставляется в активное окно,
 будто вы нажали **Ctrl + V**. Окно открывается и прячется своим сочетанием,
@@ -28,7 +28,7 @@
 
 ## Установка
 
-Скачайте `T31K-Binder.exe` из [последнего релиза](https://github.com/tthreeonek/binder/releases/latest)
+Скачайте `Binder.exe` из [последнего релиза](https://github.com/tthreeonek/binder/releases/latest)
 и запустите. Нужен WebView2 (в Windows 10/11 он уже есть).
 
 | Действие | Сочетание по умолчанию |
