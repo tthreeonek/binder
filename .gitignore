@@ -1,0 +1,7 @@
+build/bin/
+build/release/
+frontend/wailsjs/
+*.exe
+*.exe.new
+*.exe.old
+*.syso

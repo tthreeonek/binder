@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T31K Binder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="titlebar" style="--wails-draggable:drag">
+    <img class="logo" src="icon.png" alt="">
+    <div class="brand">
+      <span class="name">Биндер</span>
+      <span class="author">by T31K</span>
+    </div>
+    <div class="tb-actions">
+      <button class="tb-btn" id="btnPin" title="Поверх всех окон">
+        <svg viewBox="0 0 24 24"><path d="M15 3l6 6-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z"/></svg>
+      </button>
+      <button class="tb-btn" id="btnSettings" title="Настройки">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button class="tb-btn" id="btnHide" title="Скрыть (вернуть — сочетанием)">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+      </button>
+      <button class="tb-btn close" id="btnClose" title="Закрыть биндер">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="viewList" class="view">
+    <div class="update-banner hidden" id="updBanner">
+      <div class="upd-text">
+        <div class="upd-title">Доступна версия <span id="updVer"></span></div>
+        <a class="upd-notes" id="updNotes">Что нового</a>
+      </div>
+      <button class="primary" id="btnUpdate">Обновить</button>
+    </div>
+    <div class="hint" id="toggleHint"></div>
+    <div id="list" class="list"></div>
+    <button class="add-btn" id="btnAdd">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Добавить фразу
+    </button>
+  </main>
+
+  <main id="viewSettings" class="view hidden">
+    <section class="group">
+      <h3>Окно</h3>
+      <div class="row">
+        <div class="row-text">
+          <div class="label">Открыть / скрыть биндер</div>
+          <div class="sub">Работает из любой программы и игры</div>
+        </div>
+        <button class="chip" data-bind="toggle"></button>
+      </div>
+      <div class="row col">
+        <div class="row-head"><span class="label">Прозрачность окна</span><span class="val" id="opVal"></span></div>
+        <input type="range" id="opacity" min="0" max="80" step="1">
+        <div class="sub">Сквозь биндер видно игру — как у оверлея</div>
+      </div>
+      <label class="row check">
+        <div class="row-text">
+          <div class="label">Поверх всех окон</div>
+          <div class="sub">Чтобы биндер работал как оверлей над игрой</div>
+        </div>
+        <input type="checkbox" id="alwaysOnTop"><span class="switch"></span>
+      </label>
+      <label class="row check">
+        <div class="row-text">
+          <div class="label">Не забирать фокус при показе</div>
+          <div class="sub">Игра остаётся активной, когда биндер появляется</div>
+        </div>
+        <input type="checkbox" id="showWithoutFocus"><span class="switch"></span>
+      </label>
+    </section>
+
+    <section class="group">
+      <h3>Вставка</h3>
+      <div class="row col">
+        <span class="label">Способ</span>
+        <div class="seg" id="pasteMode">
+          <button data-mode="clipboard">Ctrl + V</button>
+          <button data-mode="type">Посимвольно</button>
+        </div>
+        <div class="sub">Если в каком-то окне Ctrl + V не срабатывает — включите посимвольный ввод.</div>
+      </div>
+      <label class="row check">
+        <div class="row-text">
+          <div class="label">Возвращать прежний буфер обмена</div>
+          <div class="sub">После вставки в буфере снова то, что вы копировали</div>
+        </div>
+        <input type="checkbox" id="restoreClipboard"><span class="switch"></span>
+      </label>
+      <label class="row check">
+        <div class="row-text">
+          <div class="label">Нажимать Enter после вставки</div>
+          <div class="sub">Фраза сразу отправляется</div>
+        </div>
+        <input type="checkbox" id="pressEnter"><span class="switch"></span>
+      </label>
+    </section>
+
+    <section class="group">
+      <h3>Обновления</h3>
+      <label class="row check">
+        <div class="row-text">
+          <div class="label">Проверять обновления</div>
+          <div class="sub">Новые версии приходят из релизов на GitHub</div>
+        </div>
+        <input type="checkbox" id="checkUpdates"><span class="switch"></span>
+      </label>
+      <div class="row">
+        <div class="row-text">
+          <div class="label" id="updStatus">Версия <span class="ver-now"></span></div>
+          <div class="sub link" id="repoLink"></div>
+        </div>
+        <button class="ghost" id="btnCheckUpd">Проверить</button>
+      </div>
+    </section>
+
+    <section class="group">
+      <h3>Данные</h3>
+      <div class="row col">
+        <div class="sub mono" id="cfgPath"></div>
+        <button class="ghost danger" id="btnReset">Сбросить фразы и настройки</button>
+      </div>
+    </section>
+
+    <div class="about">
+      <img src="icon.png" alt="">
+      <div>
+        <div class="about-name">T31K Binder <span id="ver"></span></div>
+        <div class="sub">Автор: <b>T31K</b></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer" style="--wails-draggable:drag">
+    <span id="footerInfo"></span>
+    <span class="sign">© T31K</span>
+  </footer>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <h3 id="modalTitle">Фраза</h3>
+    <textarea id="modalText" rows="5" placeholder="Текст, который будет вставлен"></textarea>
+    <div class="row">
+      <div class="row-text"><div class="label">Сочетание</div></div>
+      <button class="chip" data-bind="modal"></button>
+    </div>
+    <div class="modal-actions">
+      <button class="ghost" id="modalCancel">Отмена</button>
+      <button class="primary" id="modalSave">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
